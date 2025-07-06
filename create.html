@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Creator Tool</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        input[type=text] { width: 95%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        textarea { width: 95%; height: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+        .creator-block { border: 2px dashed #ccc; padding: 15px; margin-bottom: 15px; }
+        h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Quiz Creator Tool</h1>
+    <p>Fill out the questions below, then click "Generate Code". Copy the code from the text box and paste it into the `script.js` file in your GitHub repository.</p>
+
+    <div id="questions-container">
+        <!-- Questions will be added here by JavaScript -->
+    </div>
+
+    <button id="add-question-btn">Add Another Question</button>
+    <hr>
+    <button id="generate-btn">Generate Quiz Code</button>
+
+    <h3>Generated Code:</h3>
+    <textarea id="output-code" readonly></textarea>
+    
+    <script>
+        const questionsContainer = document.getElementById('questions-container');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const outputCode = document.getElementById('output-code');
+        let questionCount = 0;
+
+        function addQuestion() {
+            questionCount++;
+            const questionId = questionCount;
+            const block = document.createElement('div');
+            block.className = 'creator-block';
+            block.innerHTML = `
+                <h3>Question ${questionId}</h3>
+                <input type="text" placeholder="Enter your question here" class="question-title">
+                <input type="text" placeholder="Answer A" class="answer-a">
+                <input type="text" placeholder="Answer B" class="answer-b">
+                <input type="text" placeholder="Answer C" class="answer-c">
+                <input type="text" placeholder="Correct Answer Letter (a, b, or c)" class="correct-answer" maxlength="1">
+            `;
+            questionsContainer.appendChild(block);
+        }
+
+        function generateCode() {
+            const allQuestions = document.querySelectorAll('.creator-block');
+            const quizData = [];
+
+            allQuestions.forEach(q => {
+                const questionTitle = q.querySelector('.question-title').value;
+                const answerA = q.querySelector('.answer-a').value;
+                const answerB = q.querySelector('.answer-b').value;
+                const answerC = q.querySelector('.answer-c').value;
+                const correctAnswer = q.querySelector('.correct-answer').value.toLowerCase();
+
+                if (questionTitle && answerA && answerB && answerC && correctAnswer) {
+                    quizData.push({
+                        question: questionTitle,
+                        answers: { a: answerA, b: answerB, c: answerC },
+                        correctAnswer: correctAnswer
+                    });
+                }
+            });
+
+            const jsonString = JSON.stringify(quizData, null, 4);
+            outputCode.value = `const quizData = ${jsonString};`;
+            outputCode.select(); // Highlight the text for easy copying
+        }
+
+        addQuestionBtn.addEventListener('click', addQuestion);
+        generateBtn.addEventListener('click', generateCode);
+        addQuestion(); // Start with one question block
+    </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
+    </script>
+
+</body>
+</html>

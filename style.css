@@ -1,0 +1,231 @@
+/* Design-Inspired Stylesheet with Centered Titles */
+:root {
+    --bg-color: #f8f9fa;
+    --card-bg-color: #ffffff;
+    --text-color: #212529;
+    --secondary-text-color: #6c757d;
+    --primary-color: #0d6efd;
+    --primary-hover-color: #0b5ed7;
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    /* Other colors */
+    --accent-color: #6c757d;
+    --accent-hover-color: #5c636a;
+    --success-bg-color: #d1e7dd;
+    --success-text-color: #0f5132;
+    --success-border-color: #badbcc;
+    --danger-bg-color: #f8d7da;
+    --danger-text-color: #842029;
+    --danger-border-color: #f5c2c7;
+    --info-bg-color: #cff4fc;
+    --info-text-color: #055160;
+    --info-border-color: #b6effb;
+    --nav-width: 280px;
+
+    /* Colors for gradients (used in animated text) */
+    --gradient-text-color-1: #40ffaa; /* Light mode example green */
+    --gradient-text-color-2: #4079ff; /* Light mode example blue */
+    --gradient-text-color-3: #ff007f; /* Light mode example pink */
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --card-bg-color: #1e1e1e;
+        --text-color: #e8eaed;
+        --secondary-text-color: #9aa0a6;
+        --primary-color: #4285f4;
+        --primary-hover-color: #3b78e7;
+        --border-color: #3c4043;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+
+        /* Dark mode gradient text specific colors */
+        --gradient-text-color-1: #40ffaa; /* Dark mode green */
+        --gradient-text-color-2: #4079ff; /* Dark mode blue */
+        --gradient-text-color-3: #ff007f; /* Dark mode pink */
+    }
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    position: relative;
+    z-index: 0; 
+    overflow-x: hidden;
+}
+
+main {
+    padding: 20px;
+    position: relative; 
+    z-index: 2; 
+}
+
+.container {
+    max-width: 700px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+h1, h2, h3 {
+    color: var(--primary-color); /* Default color, will be overridden by gradient */
+    margin-top: 0;
+}
+
+.container > h1, 
+.container > h2 {
+    text-align: center;
+}
+.container > h1 + p {
+    text-align: center;
+}
+
+p {
+    color: var(--secondary-text-color);
+}
+
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: calc(100vh - 40px);
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1; 
+}
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+/* Styles for main titles in hero section that will get gradient/split text */
+.hero-section h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -1px;
+    /* Ensure the H1 content is not transparent initially for SplitText to work */
+    color: var(--text-color); 
+}
+/* Specific style for the very top Welcome message */
+#animated-welcome-title {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    margin-bottom: 0.2rem;
+}
+
+.hero-section p {
+    font-size: clamp(1rem, 4vw, 1.25rem);
+    max-width: 500px;
+    margin-bottom: 2rem;
+    color: var(--secondary-text-color);
+}
+.hero-section .button-style {
+    padding: 16px 48px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    margin-bottom: 2rem;
+}
+.hero-image {
+    max-width: 450px;
+    width: 90%;
+    margin-top: 1rem;
+}
+
+.creator-block, .question-block { background-color: var(--card-bg-color); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px var(--shadow-color); }
+button, a.button-style { background-color: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; margin-top: 10px; text-decoration: none; display: inline-block; transition: background-color 0.2s ease, transform 0.1s ease; }
+button:hover, a.button-style:hover { background-color: var(--primary-hover-color); transform: translateY(-1px); }
+input[type=text], textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
+textarea { height: 80px; resize: vertical; }
+button:disabled { background-color: var(--accent-color); cursor: not-allowed; transform: none; }
+a.secondary-button { background-color: var(--accent-color); }
+a.secondary-button:hover { background-color: var(--accent-hover-color); }
+.answers label { display: block; margin: 8px 0; padding: 15px; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer; transition: border-color 0.2s ease, background-color 0.2s ease; }
+.answers label:hover { border-color: var(--primary-color); background-color: var(--bg-color); }
+.answers label.correct { background-color: var(--success-bg-color); color: var(--success-text-color); border-color: var(--success-border-color); }
+.answers label.incorrect { background-color: var(--danger-bg-color); color: var(--danger-text-color); border-color: var(--danger-border-color); }
+#share-link-container { display: none; margin-top: 20px; padding: 20px; border-radius: 12px; background-color: var(--card-bg-color); border: 1px solid var(--border-color); }
+#quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+#timer { font-size: 1.5em; font-weight: bold; color: var(--primary-color); background-color: var(--card-bg-color); padding: 5px 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+.explanation-box { margin-top: 20px; padding: 15px; background-color: var(--info-bg-color); color: var(--info-text-color); border: 1px solid var(--info-border-color); border-radius: 8px; }
+.explanation-box h3 { margin-top: 0; color: var(--info-text-color); }
+#results-summary table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+#results-summary th, #results-summary td { padding: 12px; border: 1px solid var(--border-color); text-align: left; }
+#results-summary th { background-color: var(--card-bg-color); }
+.result-correct { color: var(--success-text-color); font-weight: bold; }
+.result-incorrect { color: var(--danger-text-color); font-weight: bold; }
+.prompt-box { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; position: relative; }
+.prompt-box pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 0.9em; color: var(--secondary-text-color); }
+#copy-prompt-btn { position: absolute; top: 10px; right: 10px; }
+.back-button { margin-bottom: 20px; }
+.menu-toggle { position: fixed; top: 25px; right: 25px; width: 30px; height: 25px; cursor: pointer; z-index: 1002; display: flex; flex-direction: column; justify-content: space-between; }
+.menu-toggle span { display: block; width: 100%; height: 3px; background-color: var(--text-color); border-radius: 3px; transition: all 0.3s ease-in-out; }
+.menu-toggle.is-active span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
+.menu-toggle.is-active span:nth-child(2) { opacity: 0; }
+.menu-toggle.is-active span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+.nav-panel { position: fixed; top: 0; right: 0; width: var(--nav-width); height: 100%; background-color: var(--card-bg-color); box-shadow: -5px 0 15px rgba(0,0,0,0.2); z-index: 1001; transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+.nav-panel.open { transform: translateX(0); }
+.nav-panel ul { list-style: none; padding: 0; }
+.nav-panel ul li a { display: block; padding: 15px 10px; color: var(--text-color); text-decoration: none; font-size: 1.1em; font-weight: 500; border-radius: 8px; transition: background-color 0.2s; }
+.nav-panel ul li a:hover { background-color: var(--bg-color); }
+.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; }
+.overlay.open { opacity: 1; visibility: visible; }
+body.nav-open { overflow: hidden; }
+
+/* --- Infinite Menu Styles --- */
+.infinite-menu-section {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 0 10px;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.infinite-menu-container {
+    overflow: hidden;
+}
+
+.infinite-menu-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.infinite-menu-item {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    margin-right: 15px;
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.infinite-menu-item:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* --- Particles.js Container Styles --- */
+#particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    background-color: var(--bg-color);
+}

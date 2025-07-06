@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Quiz</title>
+    <meta name="theme-color" content="#4285f4"/>
+    <link rel="manifest" href="./manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
+    <div class="overlay" id="overlay"></div>
+    <nav class="nav-panel" id="nav-panel"><ul><li><a href="./how-to.html">How to Create a File?</a></li><li><a href="https://360pwatcher.github.io/Anilist/" target="_blank">Contact Us</a></li></ul></nav>
+    <main>
+        <div id="quiz-view" style="display: none;"></div>
+        <div id="results-view" style="display: none;"></div>
+        <div id="error-container" style="display: none;"><div class="container"><h2>Oops!</h2><p>Could not load the quiz. It may not exist, may have been deleted, or the link is incorrect.</p><a href="./index.html" class="button-style">Go to Homepage</a></div></div>
+        <div id="loading-container" class="container" style="text-align: center;"><h2>Loading Quiz...</h2></div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // This function runs our main app logic ONLY after external libraries are ready.
+            function mainApp() {
+                // --- SETUP ---
+                const supabaseUrl = 'https://ckjtmhsolnjjmxxndslv.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNranRtaHNvbG5qam14eG5kc2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NDEyMTgsImV4cCI6MjA2NzIxNzIxOH0.wADqu8wQHy5rWT6pHFaGK-kVEapXCsNxVM27iwg-5I8';
+                const { createClient } = window.supabase;
+                const supabase = createClient(supabaseUrl, supabaseKey);
+
+                // --- DOM REFERENCES ---
+                const menuToggle = document.getElementById('menu-toggle');
+                const navPanel = document.getElementById('nav-panel');
+                const overlay = document.getElementById('overlay');
+                const body = document.body;
+                const quizView = document.getElementById('quiz-view');
+                const resultsView = document.getElementById('results-view');
+                const errorContainer = document.getElementById('error-container');
+                const loadingContainer = document.getElementById('loading-container');
+
+                // --- GLOBAL STATE ---
+                let quizData, currentQIndex, score, userAnswers, timePerQuestion, timerInterval, questionStartTime;
+
+                // --- MENU LOGIC ---
+                const closeMenu = () => { menuToggle.classList.remove('is-active'); navPanel.classList.remove('open'); overlay.classList.remove('open'); body.classList.remove('no-scroll'); };
+                
+                // --- QUIZ PLAYER LOGIC (Robust Event Delegation) ---
+                const startQuiz = (data) => {
+                    quizData = data; currentQIndex = 0; score = 0; userAnswers = []; timePerQuestion = [];
+                    loadingContainer.style.display = 'none';
+                    quizView.style.display = 'block';
+                    resultsView.style.display = 'none';
+                    quizView.innerHTML = `<div class="container"><div id="quiz-header"><h2 id="question-counter"></h2><div id="timer">0s</div></div><div class="question-block"><div class="question" id="question-text"></div><div class="answers" id="answer-options"></div></div><div id="explanation-box" style="display: none;"><h3>Explanation</h3><p id="explanation-text"></p></div><button id="submit-btn">Submit Answer</button><button id="next-btn" style="display: none;">Next Question</button></div>`;
+                    displayQuestion();
+                };
+                const startTimer = () => { const timerDisplay = document.getElementById('timer'); questionStartTime = Date.now(); timerInterval = setInterval(() => { timerDisplay.textContent = `${Math.floor((Date.now() - questionStartTime) / 1000)}s`; }, 1000); };
+                const stopTimer = () => { clearInterval(timerInterval); timePerQuestion.push(Math.round((Date.now() - questionStartTime) / 1000)); };
+                const displayQuestion = () => {
+                    const qCounter = document.getElementById('question-counter'); const qText = document.getElementById('question-text'); const answerOpts = document.getElementById('answer-options');
+                    document.getElementById('submit-btn').style.display = 'inline-block';
+                    document.getElementById('next-btn').style.display = 'none';
+                    answerOpts.innerHTML = '';
+                    const currentQ = quizData[currentQIndex];
+                    qCounter.textContent = `Question ${currentQIndex + 1} of ${quizData.length}`;
+                    qText.textContent = currentQ.question;
+                    for (const letter in currentQ.answers) { const label = document.createElement('label'); const answerText = currentQ.answers[letter]; label.innerHTML = `<input type="radio" name="answer" value="${letter}">`; label.appendChild(document.createTextNode(` ${letter.toUpperCase()}: ${answerText}`)); answerOpts.appendChild(label); }
+                    if (window.MathJax) { MathJax.typeset(); }
+                    startTimer();
+                };
+                const handleSubmit = () => {
+                    const answerOpts = document.getElementById('answer-options'); const selectedRadio = answerOpts.querySelector('input[name="answer"]:checked');
+                    if (!selectedRadio) { alert('Please select an answer!'); return; }
+                    stopTimer();
+                    const userAnswer = selectedRadio.value; const currentQ = quizData[currentQIndex]; userAnswers.push(userAnswer);
+                    answerOpts.querySelectorAll('input').forEach(input => input.disabled = true);
+                    const correctLabel = answerOpts.querySelector(`input[value="${currentQ.correctAnswer}"]`).parentElement; correctLabel.classList.add('correct');
+                    if (userAnswer === currentQ.correctAnswer) { score++; } else { selectedRadio.parentElement.classList.add('incorrect'); }
+                    const explanationBox = document.getElementById('explanation-box'); const explanationText = document.getElementById('explanation-text');
+                    if (currentQ.explanation) { explanationText.textContent = currentQ.explanation; explanationBox.style.display = 'block'; if (window.MathJax) { MathJax.typesetPromise([explanationBox]).catch((err) => console.log(err.message)); } }
+                    document.getElementById('submit-btn').style.display = 'none';
+                    const nextBtn = document.getElementById('next-btn');
+                    nextBtn.style.display = 'inline-block';
+                    if (currentQIndex === quizData.length - 1) { nextBtn.textContent = 'Show Results'; }
+                };
+                const handleNext = () => {
+                    currentQIndex++;
+                    if (currentQIndex < quizData.length) { displayQuestion(); } else { displayResults(); }
+                };
+                const displayResults = () => {
+                    quizView.style.display = 'none'; resultsView.style.display = 'block';
+                    resultsView.innerHTML = `<div class="container"><h2>Quiz Complete!</h2><p id="final-score"></p><p id="total-time"></p><h3>Performance Summary</h3><div id="results-summary"></div><a href="./index.html" class="button-style secondary-button">Create a New Quiz</a></div>`;
+                    const finalScoreEl = document.getElementById('final-score'); const totalTimeEl = document.getElementById('total-time'); const summaryEl = document.getElementById('results-summary');
+                    finalScoreEl.textContent = `Final Score: ${score} out of ${quizData.length}`;
+                    const totalTime = timePerQuestion.reduce((a, b) => a + b, 0);
+                    totalTimeEl.textContent = `Total Time: ${totalTime} seconds`;
+                    let summaryHtml = '<table><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Time</th></tr>';
+                    quizData.forEach((q, i) => { const isCorrect = userAnswers[i] === q.correctAnswer; const statusClass = isCorrect ? 'result-correct' : 'result-incorrect'; const statusSymbol = isCorrect ? '✔' : '✖'; const userAnswerText = `${userAnswers[i] ? userAnswers[i].toUpperCase() : 'N/A'}: ${userAnswers[i] ? q.answers[userAnswers[i]] : 'No Answer'}`; const correctAnswerText = `Correct: ${q.correctAnswer.toUpperCase()}: ${q.answers[q.correctAnswer]}`; summaryHtml += `<tr><td class="${statusClass}">${statusSymbol}</td><td>${q.question}</td><td>${userAnswerText} <br><small class="${statusClass}">${isCorrect ? '' : correctAnswerText}</small></td><td>${timePerQuestion[i]}s</td></tr>`; });
+                    summaryHtml += '</table>';
+                    document.getElementById('results-summary').innerHTML = summaryHtml;
+                    if (window.MathJax) { MathJax.typesetPromise([resultsView]).catch((err) => console.log(err.message)); }
+                };
+
+                // --- EVENT LISTENERS ---
+                menuToggle.addEventListener('click', () => { menuToggle.classList.toggle('is-active'); navPanel.classList.toggle('open'); overlay.classList.toggle('open'); body.classList.toggle('no-scroll'); });
+                overlay.addEventListener('click', closeMenu);
+                // THE FIX: One listener on the parent div handles all button clicks inside it.
+                quizView.addEventListener('click', (e) => {
+                    if (e.target && e.target.id === 'submit-btn') {
+                        handleSubmit();
+                    }
+                    if (e.target && e.target.id === 'next-btn') {
+                        handleNext();
+                    }
+                });
+
+                // --- INITIALIZATION ---
+                async function initializeQuiz() {
+                    try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const quizId = urlParams.get('id');
+                        if (!quizId) throw new Error("No quiz ID found in the link.");
+                        let { data, error } = await supabase.from('quizzes').select('data').eq('short_id', quizId).single();
+                        if (error) throw error;
+                        const loadedQuizData = data.data;
+                        if (!Array.isArray(loadedQuizData) || loadedQuizData.length === 0) throw new Error("Fetched data is not a valid quiz.");
+                        startQuiz(loadedQuizData);
+                    } catch (e) {
+                        console.error("Quiz initialization failed:", e.message);
+                        loadingContainer.style.display = 'none';
+                        errorContainer.style.display = 'block';
+                    }
+                }
+                initializeQuiz();
+            }
+
+            // This function waits for external libraries before running the app.
+            function waitForLibs() { if (window.supabase) { mainApp(); } else { setTimeout(waitForLibs, 100); } }
+            waitForLibs();
+        });
+        
+        // --- PWA REGISTRATION ---
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
+    </script>
+</body>
+</html>

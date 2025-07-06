@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create a Quiz File</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="button-style secondary-button back-button">← Back to Creator</a>
+
+        <h1>How to Create a Quiz</h1>
+        <p>There are two main ways to create a quiz: using the AI Generator or manually creating a text file.</p>
+
+        <div class="creator-block">
+            <h2>Method 1: AI Generator (Recommended)</h2>
+            <p>You can automatically generate a quiz by providing a document and your own Google Gemini API key.</p>
+            <ol>
+                <li><strong>Get a Gemini API Key:</strong> You can get a free API key from Google AI Studio. Go to <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> and click "Create API key".</li>
+                <li><strong>Go to the Creator Page:</strong> Navigate back to the main page and find the "Generate with AI" section.</li>
+                <li><strong>Paste Your Key & Upload:</strong> Paste your secret API key into the provided input box and upload your document (.txt, .pdf, etc.). The website will then generate the quiz for you using the Gemini API.</li>
+            </ol>
+        </div>
+        
+        <div class="creator-block">
+            <h2>Method 2: Manual File Creation</h2>
+            <p>If you prefer not to use an API key, you can use an AI chatbot with the prompt below to generate the file content, then save it as a `.txt` file and upload it.</p>
+            <div class="prompt-box">
+                <pre id="prompt-text">You are a file conversion utility. Your only function is to convert the provided text from a question paper into a specific 7-line format. Your entire output MUST be ONLY the formatted text content. Do not write any other words. For any mathematical notation, enclose it in LaTeX delimiters like \(...\). If a question in the source does NOT have a clear, single-letter answer (A, B, C, or D) in the answer key, you MUST OMIT that entire question from your output.
+
+REQUIRED 7-LINE FORMAT PER QUESTION:
+1. [The full question text]
+2. [The text for option A]
+3. [The text for option B]
+4. [The text for option C]
+5. [The text for option D]
+6. ANSWER: [The single, correct lowercase letter]
+7. EXPLANATION: [An explanation, or blank]
+
+Each 7-line block must be separated by one blank line.
+---
+CONVERT THE FOLLOWING TEXT:
+
+[PASTE THE ENTIRE TEXT FROM YOUR QUIZ DOCUMENT HERE]</pre>
+                <button id="copy-prompt-btn">Copy Prompt</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const copyBtn = document.getElementById('copy-prompt-btn');
+        const promptText = document.getElementById('prompt-text');
+        copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(promptText.innerText).then(() => { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Prompt'; }, 2000); }); });
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
+    </script>
+</body>
+</html>

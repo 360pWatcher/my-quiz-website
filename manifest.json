@@ -1,0 +1,16 @@
+{
+  "name": "Quiz Creator",
+  "short_name": "QuizApp",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0d6efd",
+  "description": "Create and take interactive quizzes on the go.",
+  "icons": [
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

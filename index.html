@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Creator</title>
+    <meta name="theme-color" content="#4285f4"/>
+    <link rel="manifest" href="./manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+    
+    <!-- GSAP library for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.4/gsap.min.js"></script>
+
+    <!-- Particles.js library -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <!-- Particles.js container div -->
+    <div id="particles-js"></div>
+
+    <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
+    <div class="overlay" id="overlay"></div>
+    <nav class="nav-panel" id="nav-panel"><ul><li><a href="./how-to.html">How to Create a File?</a></li><li><a href="https://360pwatcher.github.io/Anilist/" target="_blank">Contact Us</a></li></ul></nav>
+    <main>
+        <div id="hero-section" class="hero-section">
+            <div class="hero-content">
+                <!-- NEW: Welcome message H1 -->
+                <!-- Removed animated-gradient-text class here, it's applied dynamically now -->
+                <h1 id="animated-welcome-title" class="text-2xl font-semibold text-center">Welcome to Imon's Website</h1>
+                
+                <!-- Main title H1 -->
+                <!-- Removed animated-gradient-text class here, it's applied dynamically now -->
+                <h1 id="animated-quiz-title" class="text-2xl font-semibold text-center">CREATE A QUIZ</h1>
+                <p>Build your own interactive quizzes with ease.</p><a href="#" id="show-creator-btn" class="button-style">Create Quiz</a>
+            </div>
+            <img src="./hero-image.svg" alt="Quiz illustration" class="hero-image">
+            <div id="quiz-counter-display" style="margin-top: 2rem; color: var(--secondary-text-color);"><span id="total-quizzes">...</span> quizzes created so far!</div>
+        </div>
+
+        <section class="infinite-menu-section">
+            <div class="infinite-menu-container" id="infinite-menu-container-main">
+                <div class="infinite-menu-wrapper" id="infinite-menu-wrapper-main">
+                    <div class="infinite-menu-item">Vectors</div>
+                    <div class="infinite-menu-item">Calculus</div>
+                    <div class="infinite-menu-item">Physics</div>
+                    <div class="infinite-menu-item">Chemistry</div>
+                    <div class="infinite-menu-item">Algebra</div>
+                    <div class="infinite-menu-item">Geometry</div>
+                    <div class="infinite-menu-item">Thermodynamics</div>
+                    <div class="infinite-menu-item">Electromagnetism</div>
+                    <div class="infinite-menu-item">Mechanics</div>
+                    <div class="infinite-menu-item">Biology</div>
+                    <div class="infinite-menu-item">History</div>
+                    <div class="infinite-menu-item">Geography</div>
+                    <div class="infinite-menu-item">Programming</div>
+                    <div class="infinite-menu-item">Data Science</div>
+                </div>
+            </div>
+        </section>
+
+        <div id="creator-section" style="display: none;">
+            <div class="container">
+                <!-- Applied animated-gradient-text class in CSS, no longer here -->
+                <h1>Quiz Creator</h1> 
+                <p>Use any of the methods below to generate your quiz.</p>
+                
+                <div class="creator-block">
+                    <h3>Generate with AI (Recommended)</h3>
+                    <p>Provide your Google Gemini API key and a document to automatically create a quiz. <a href="how-to.html">How to get a key?</a></p>
+                    <input type="password" id="api-key-input" placeholder="Paste your Gemini API Key here">
+                    <input type="file" id="ai-file-input" accept=".txt,.pdf">
+                    <button id="ai-generate-btn">Generate Quiz with AI</button>
+                    <div id="ai-share-link-container" class="share-link-container" style="display: none;"></div>
+                </div>
+
+                <div class="creator-block">
+                    <h3>Upload a Pre-formatted File</h3>
+                    <input type="file" id="quiz-file-input" accept=".txt,.csv">
+                    <button id="create-from-file-btn">Create Link from File</button>
+                    <div id="file-share-link-container" class="share-link-container" style="display: none;"></div>
+                </div>
+
+                <div class="creator-block">
+                    <h3>Or, Create Manually:</h3>
+                    <div id="questions-container"></div>
+                    <button id="add-question-btn">Add Another Question</button>
+                    <button id="generate-manual-btn">Create Link from Form</button>
+                    <div id="manual-share-link-container" class="share-link-container" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        <div id="quiz-view" style="display: none;"></div>
+        <div id="results-view" style="display: none;"></div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function mainApp() {
+                const supabaseUrl = 'https://ckjtmhsolnjjmxxndslv.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNranRtaHNvbG5qam14eG5kc2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NDEyMTgsImV4cCI6MjA2NzIxNzIxOH0.wADqu8wQHy5rWT6pHFaGK-kVEapXCsNxVM27iwg-5I8';
+                const { createClient } = window.supabase;
+                const supabase = createClient(supabaseUrl, supabaseKey);
+
+                const heroSection = document.getElementById('hero-section'); const creatorSection = document.getElementById('creator-section'); const quizView = document.getElementById('quiz-view'); const resultsView = document.getElementById('results-view'); const showCreatorBtn = document.getElementById('show-creator-btn'); const questionsContainer = document.getElementById('questions-container'); const addQuestionBtn = document.getElementById('add-question-btn'); const generateManualBtn = document.getElementById('generate-manual-btn'); const fileInput = document.getElementById('quiz-file-input'); const createFileBtn = document.getElementById('create-from-file-btn'); const menuToggle = document.getElementById('menu-toggle'); const navPanel = document.getElementById('nav-panel'); const overlay = document.getElementById('overlay'); const body = document.body; const quizCounterDisplay = document.getElementById('total-quizzes'); const aiApiKeyInput = document.getElementById('api-key-input'); const aiFileInput = document.getElementById('ai-file-input'); const aiGenerateBtn = document.getElementById('ai-generate-btn'); const aiShareContainer = document.getElementById('ai-share-link-container'); const fileShareContainer = document.getElementById('file-share-link-container'); const manualShareContainer = document.getElementById('manual-share-link-container');
+                let quizDataForOfflinePlay = [];
+                
+                const closeMenu = () => { menuToggle.classList.remove('is-active'); navPanel.classList.remove('open'); overlay.classList.remove('open'); body.classList.remove('no-scroll'); };
+                const showCreatorView = () => { heroSection.style.display = 'none'; creatorSection.style.display = 'block'; };
+                const updateQuizCount = async () => { try { const { count, error } = await supabase.from('quizzes').select('*', { count: 'exact', head: true }); if (error) throw error; quizCounterDisplay.textContent = count; } catch (error) { console.error("Error fetching quiz count:", error.message); quizCounterDisplay.textContent = 'N/A'; } };
+                
+                const generateQuizWithAI = async () => {
+                    const apiKey = aiApiKeyInput.value.trim();
+                    const file = aiFileInput.files[0];
+                    if (!apiKey) { alert('Please enter your Gemini API key.'); return; } 
+                    if (!file) { alert('Please select a document to upload.'); return; }
+                    
+                    aiGenerateBtn.disabled = true;
+                    aiGenerateBtn.textContent = 'Reading & Generating...';
+                    
+                    try {
+                        if (file.type === 'application/pdf') {
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js`;
+                            const fileReader = new FileReader();
+                            fileReader.onload = async function() {
+                                const typedarray = new Uint8Array(this.result);
+                                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                                let relevantText = '';
+                                
+                                for (let i = 1; i <= pdf.numPages; i++) {
+                                    const page = await pdf.getPage(i);
+                                    const textContent = await page.getTextContent();
+                                    
+                                    let lastY = -1;
+                                    let pageText = '';
+                                    textContent.items.forEach(item => {
+                                        if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) {
+                                            pageText += '\n';
+                                        }
+                                        pageText += item.str;
+                                    });
+
+                                    const lowerCaseText = pageText.toLowerCase();
+                                    if (!lowerCaseText.includes("answer key") && !lowerCaseText.includes("solutions")) {
+                                        relevantText += pageText + '\n\n';
+                                    }
+                                }
+                                await callGeminiAPI(apiKey, relevantText); 
+                            };
+                            fileReader.readAsArrayBuffer(file);
+                        } else {
+                            const documentText = await file.text();
+                            await callGeminiAPI(apiKey, documentText); 
+                        }
+                    } catch (error) {
+                        console.error("Error processing file:", error);
+                        alert("Failed to read the document.");
+                        resetAIGeneratorButton();
+                    }
+                };
+                
+                const callGeminiAPI = async (apiKey, documentText) => {
+                    const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+                    const prompt = `You are a high-precision data transcription and problem-solving utility. Your task is to extract and format MCQ questions from the provided text.
+
+Your entire output MUST be ONLY the formatted text content. Do NOT include any introductory phrases, greetings, summaries, or additional commentary.
+
+**ABSOLUTE CRITICAL RULE (VERBATIM COPYING):**
+For the question text and ALL options (A, B, C, D), you MUST copy them *exactly* as they appear in the source document. Do NOT rephrase, summarize, simplify, or alter them in any way. Preserve original wording, punctuation, and capitalization. This rule takes precedence over ANY other instruction, including LaTeX formatting. If applying LaTeX would cause the original text to be rephrased or altered, then DO NOT apply LaTeX to that specific part, and instead just copy the text verbatim.
+
+**CRITICAL RULE (SOLVING):** After transcribing the question and options verbatim, your secondary task is to determine the correct answer (A, B, C, or D) by solving the question yourself.
+
+**CRITICAL RULE (LaTeX Formatting):** For any mathematical or scientific notation (fractions, powers, vectors, equations, etc.), you MUST enclose it in LaTeX delimiters. Use \\( ... \\) for inline math. Apply LaTeX *after* copying the text verbatim, and only if it does NOT violate the verbatim copying rule.
+
+## REQUIRED OUTPUT FORMAT
+Every question you convert must strictly follow this structure. Each block MUST be separated by exactly one blank line.
+
+1. [The full question text, copied verbatim, with math formatted in LaTeX]
+(a) [The text for option A, copied verbatim, with math formatted in LaTeX]
+(b) [The text for option B, copied verbatim, with math formatted in LaTeX]
+(c) [The text for option C, copied verbatim, with math formatted in LaTeX]
+(d) [The text for option D, copied verbatim, with math formatted in LaTeX]
+ANSWER: [The single, correct lowercase letter you determined]
+EXPLANATION: [A brief, concise explanation of how you arrived at the answer, with math formatted in LaTeX. If no explanation is possible, leave this line blank after the colon.]
+
+## EXAMPLE OF CONVERSION (Illustrates absolute verbatim copying):
+
+### IF THE INPUT TEXT IS:
+Q1 The solution to x^2 = 9 is: (A) 3 (B) -3 (C) +/- 3 (D) None of these
+Answer Key: Q1 (C)
+
+### YOUR CORRECT OUTPUT MUST BE:
+1. The solution to \\(x^2 = 9\\) is:
+(a) 3
+(b) -3
+(c) +/- 3
+(d) None of these
+ANSWER: c
+EXPLANATION: The solutions to \\(x^2 = 9\\) are \\(x = \pm 3\\).
+
+---
+## YOUR TASK:
+Now, apply these strict rules to the following text. Convert ALL questions you find.
+
+${documentText}
+`;
+
+                    try {
+                        const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                contents: [{ 
+                                    parts: [{ text: prompt }] 
+                                }]
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error("Gemini API Error Response:", errorData);
+                            let userFacingError = errorData.error?.message || `HTTP error! Status: ${response.status}`;
+                            throw new Error(userFacingError);
+                        }
+
+                        const result = await response.json();
+                        const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text; 
+                        
+                        if (!generatedText) {
+                            console.error("Gemini API: No content generated.", result);
+                            throw new Error("No text generated by the AI. This can happen if the prompt was too complex or AI had issues.");
+                        }
+
+                        const generatedQuizData = parseAIResponse(generatedText); 
+                        
+                        if (generatedQuizData.length > 0) {
+                            await generateAndSaveQuiz(generatedQuizData, aiShareContainer);
+                        } else {
+                            alert("The AI returned a response, but no valid questions could be parsed from it. This can happen with very complex or unusually formatted documents, or if the AI's output format changed.");
+                        }
+                    } catch (error) {
+                        console.error("Gemini API or parsing error:", error);
+                        alert(`An error occurred while generating the quiz: ${error.message}.`);
+                    } finally {
+                        resetAIGeneratorButton();
+                    }
+                };
+                
+                const parseAIResponse = (text) => { 
+                    const data = [];
+                    const trimmedText = text.trim();
+
+                    if (trimmedText.startsWith('"Question"')) {
+                        const lines = trimmedText.split('\n');
+                        const csvRegex = /"([^"]*)"/g;
+                        for (let i = 1; i < lines.length; i++) {
+                            const fields = Array.from(lines[i].matchAll(csvRegex), m => m[1]);
+                            if (fields.length < 7) continue;
+                            data.push({ question: fields[0], answers: { a: fields[1], b: fields[2], c: fields[3], d: fields[4] }, correctAnswer: fields[5].trim().toLowerCase(), explanation: fields[6] });
+                        }
+                        return data;
+                    } 
+                    
+                    else if (trimmedText.includes('\t')) {
+                        const lines = trimmedText.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('#') || !line.trim()) continue;
+                            const fields = line.split('\t');
+                            if (fields.length < 7) continue;
+                            data.push({ question: fields[0], answers: { a: fields[1], b: fields[2], c: fields[3], d: fields[4] }, correctAnswer: fields[5].trim().toLowerCase(), explanation: fields[6] });
+                        }
+                        return data;
+                    } 
+                    
+                    else {
+                        const questionBlocks = trimmedText.split(/\n\s*\n/);
+                        for (const block of questionBlocks) {
+                            const lines = block.split('\n').filter(line => line.trim() !== '');
+                            if (lines.length < 3) continue;
+
+                            let question = lines[0].replace(/^\d+\.\s*/, '').trim();
+                            const answers = {};
+                            let correctAnswer = '';
+                            let explanation = '';
+                            
+                            const optionRegex = /^\s*\(([a-d])\)\s*(.*)/i;
+                            const answerRegex = /^ANSWER:\s*([a-d])\s*$/i;
+                            const explanationRegex = /^EXPLANATION:(.*)$/i;
+                            
+                            let autoOptionChar = 'a';
+
+                            for (let i = 1; i < lines.length; i++) {
+                                const line = lines[i].trim();
+                                const optionMatch = line.match(optionRegex);
+                                const answerMatch = line.match(answerRegex);
+                                const explanationMatch = line.match(explanationRegex);
+
+                                if (answerMatch) {
+                                    correctAnswer = answerMatch[1].toLowerCase();
+                                } else if (explanationMatch) {
+                                    explanation = explanationMatch[1].trim();
+                                } else if (optionMatch) {
+                                    const letter = optionMatch[1].toLowerCase();
+                                    const text = optionMatch[2].trim();
+                                    answers[letter] = text;
+                                } else if (autoOptionChar <= 'd') {
+                                    answers[autoOptionChar] = line;
+                                    autoOptionChar = String.fromCharCode(autoOptionChar.charCodeAt(0) + 1);
+                                }
+                            }
+                            
+                            if (question && correctAnswer && Object.keys(answers).length > 0) {
+                                for (const char of ['a', 'b', 'c', 'd']) {
+                                    if (!answers[char]) { answers[char] = ''; }
+                                }
+                                data.push({
+                                    question: question,
+                                    answers: answers,
+                                    correctAnswer: correctAnswer,
+                                    explanation: explanation
+                                });
+                            }
+                        }
+                        return data;
+                    }
+                };
+                
+                const resetAIGeneratorButton = () => { aiGenerateBtn.disabled = false; aiGenerateBtn.textContent = 'Generate Quiz with AI'; };
+                const saveApiKey = () => { localStorage.setItem('geminiApiKey', aiApiKeyInput.value); }; 
+                const loadApiKey = () => { const savedKey = localStorage.getItem('geminiApiKey'); if(savedKey) aiApiKeyInput.value = savedKey; }; 
+                let questionCount = 0;
+                const addQuestion = () => { questionCount++; const block = document.createElement('div'); block.className = 'manual-question-block'; block.innerHTML = `<h4>Question ${questionCount}</h4><input type="text" placeholder="Enter your question" class="question-title"><input type="text" placeholder="Answer A" class="answer-a"><input type="text" placeholder="Answer B" class="answer-b"><input type="text" placeholder="Answer C" class="answer-c"><input type="text" placeholder="Answer D" class="answer-d"><input type="text" placeholder="Correct Answer Letter (a, b, c, or d)" class="correct-answer" maxlength="1"><textarea placeholder="Optional: Enter explanation here" class="explanation"></textarea>`; questionsContainer.appendChild(block); };
+                const getQuizDataFromForm = () => { const data = []; document.querySelectorAll('.manual-question-block').forEach(qBlock => { const questionTitle = qBlock.querySelector('.question-title').value; const answerA = qBlock.querySelector('.answer-a').value; const answerB = qBlock.querySelector('.answer-b').value; const answerC = qBlock.querySelector('.answer-c').value; const answerD = qBlock.querySelector('.answer-d').value; const correctAnswer = qBlock.querySelector('.correct-answer').value.toLowerCase(); const explanation = qBlock.querySelector('.explanation').value.trim(); if (questionTitle && answerA && answerB && answerC && answerD && correctAnswer) { data.push({ question: questionTitle, answers: { a: answerA, b: answerB, c: answerC, d: answerD }, correctAnswer: correctAnswer, explanation: explanation }); } }); return data; };
+                const handleFileUpload = () => { const file = fileInput.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { const data = parseAIResponse(e.target.result); if(data.length > 0) generateAndSaveQuiz(data, fileShareContainer); else alert('Could not parse file.'); }; reader.readAsText(file); };
+                
+                const generateAndSaveQuiz = async (data, container) => { quizDataForOfflinePlay = data; if (!data || data.length === 0) { alert("No valid questions found."); return; } await updateQuizCount(); const quizId = Date.now().toString(36) + Math.random().toString(36).substring(2, 7); container.style.display = 'block'; container.innerHTML = `<h3>Your quiz is ready!</h3><p>Copy the link to share, or start the quiz directly.</p><input type="text" id="share-link-${quizId}" value="Saving to cloud..." readonly><a href="#" id="start-quiz-btn-${quizId}" class="button-style">Start Quiz Now</a>`; const newShareLinkInput = document.getElementById(`share-link-${quizId}`); const newStartQuizBtn = document.getElementById(`start-quiz-btn-${quizId}`); newStartQuizBtn.disabled = true; newStartQuizBtn.addEventListener('click', (e) => { e.preventDefault(); startOfflineQuiz(quizDataForOfflinePlay); }); try { const { error } = await supabase.from('quizzes').insert({ short_id: quizId, data: data }); if (error) { throw error; } const baseUrl = window.location.href.replace('index.html', '').replace(/\/$/, ''); const shareableUrl = `${baseUrl}/quiz.html?id=${quizId}`; newShareLinkInput.value = shareableUrl; } catch (error) { console.error('Supabase save error:', error.message); newShareLinkInput.value = 'Error: Could not save quiz online.'; alert(`Failed to save quiz online. 'Start Quiz Now' still works.\n\nError: ${error.message}`); } finally { newStartQuizBtn.disabled = false; } };
+                
+                let currentQIndex, score, userAnswers, timePerQuestion, timerInterval, questionStartTime;
+                const startOfflineQuiz = (data) => { if (data && data.length > 0) { creatorSection.style.display = 'none'; heroSection.style.display = 'none'; startQuizPlayer(data); } else { alert("Please generate a quiz first before starting."); } };
+                const startQuizPlayer = (data) => { quizDataForOfflinePlay = data; currentQIndex = 0; score = 0; userAnswers = []; timePerQuestion = []; quizView.style.display = 'block'; resultsView.style.display = 'none'; quizView.innerHTML = `<div class="container"><div id="quiz-header"><h2 id="question-counter"></h2><div id="timer">0s</div></div><div class="question-block"><div class="question" id="question-text"></div><div class="answers" id="answer-options"></div></div><div id="explanation-box" style="display: none;"><h3>Explanation</h3><p id="explanation-text"></p></div><button id="submit-btn">Submit Answer</button><button id="next-btn" style="display: none;">Next Question</button></div>`; attachPlayerListeners(); displayQuestion(); };
+                const attachPlayerListeners = () => { quizView.addEventListener('click', (e) => { if (e.target.id === 'submit-btn') handleSubmit(); if (e.target.id === 'next-btn') handleNext(); }); };
+                const startTimer = () => { const timerDisplay = document.getElementById('timer'); questionStartTime = Date.now(); timerInterval = setInterval(() => { timerDisplay.textContent = `${Math.floor((Date.now() - questionStartTime) / 1000)}s`; }, 1000); };
+                const stopTimer = () => { clearInterval(timerInterval); timePerQuestion.push(Math.round((Date.now() - questionStartTime) / 1000)); };
+                
+                const displayQuestion = () => {
+                    const qCounter = document.getElementById('question-counter');
+                    const qText = document.getElementById('question-text');
+                    const answerOpts = document.getElementById('answer-options');
+                    const explanationBox = document.getElementById('explanation-box');
+                    
+                    document.getElementById('submit-btn').style.display = 'inline-block';
+                    document.getElementById('next-btn').style.display = 'none';
+                    explanationBox.style.display = 'none'; 
+                    answerOpts.innerHTML = '';
+                    
+                    const currentQ = quizDataForOfflinePlay[currentQIndex];
+                    qCounter.textContent = `Question ${currentQIndex + 1} of ${quizDataForOfflinePlay.length}`;
+                    qText.textContent = currentQ.question;
+                    
+                    for (const letter in currentQ.answers) {
+                        const label = document.createElement('label');
+                        const answerText = currentQ.answers[letter];
+                        label.innerHTML = `<input type="radio" name="answer" value="${letter}">`;
+                        label.appendChild(document.createTextNode(` ${letter.toUpperCase()}: ${answerText}`));
+                        answerOpts.appendChild(label);
+                    }
+                    if (window.MathJax) { MathJax.typeset(); }
+                    startTimer();
+                };
+
+                const handleSubmit = () => { const answerOpts = document.getElementById('answer-options'); const selectedRadio = answerOpts.querySelector('input[name="answer"]:checked'); if (!selectedRadio) { alert('Please select an answer!'); return; } stopTimer(); const userAnswer = selectedRadio.value; const currentQ = quizDataForOfflinePlay[currentQIndex]; userAnswers.push(userAnswer); answerOpts.querySelectorAll('input').forEach(input => input.disabled = true); const correctRadio = answerOpts.querySelector(`input[value="${currentQ.correctAnswer}"]`);
+const correctLabel = correctRadio ? correctRadio.parentElement : null;
+if (correctLabel) correctLabel.classList.add('correct'); if (userAnswer === currentQ.correctAnswer) { score++; } else { selectedRadio.parentElement.classList.add('incorrect'); } const explanationBox = document.getElementById('explanation-box'); const explanationText = document.getElementById('explanation-text'); if (currentQ.explanation) { explanationText.textContent = currentQ.explanation; explanationBox.style.display = 'block'; if (window.MathJax) { MathJax.typesetPromise([explanationBox]).catch((err) => console.log(err.message)); } } document.getElementById('submit-btn').style.display = 'none'; const nextBtn = document.getElementById('next-btn'); nextBtn.style.display = 'inline-block'; if (currentQIndex === quizDataForOfflinePlay.length - 1) { nextBtn.textContent = 'Show Results'; } };
+                const handleNext = () => { currentQIndex++; if (currentQIndex < quizDataForOfflinePlay.length) { displayQuestion(); } else { displayResults(); } };
+                const displayResults = () => { quizView.style.display = 'none'; resultsView.style.display = 'block'; resultsView.innerHTML = `<div class="container"><h2>Quiz Complete!</h2><p id="final-score"></p><p id="total-time"></p><h3>Performance Summary</h3><div id="results-summary"></div><a href="./index.html" class="button-style secondary-button">Create a New Quiz</a></div>`; const finalScoreEl = document.getElementById('final-score'); const totalTimeEl = document.getElementById('total-time'); const summaryEl = document.getElementById('results-summary'); finalScoreEl.textContent = `Final Score: ${score} out of ${quizDataForOfflinePlay.length}`; const totalTime = timePerQuestion.reduce((a, b) => a + b, 0); totalTimeEl.textContent = `Total Time: ${totalTime} seconds`; let summaryHtml = '<table><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Time</th></tr>'; quizDataForOfflinePlay.forEach((q, i) => { const isCorrect = userAnswers[i] === q.correctAnswer; const statusClass = isCorrect ? 'result-correct' : 'result-incorrect'; const statusSymbol = isCorrect ? '✔' : '✖'; const userAnswerText = `${userAnswers[i] ? userAnswers[i].toUpperCase() : 'N/A'}: ${userAnswers[i] ? q.answers[userAnswers[i]] : 'No Answer'}`; const correctAnswerText = `Correct: ${q.correctAnswer.toUpperCase()}: ${q.answers[q.correctAnswer]}`; summaryHtml += `<tr><td class="${statusClass}">${statusSymbol}</td><td>${q.question}</td><td>${userAnswerText} <br><small class="${statusClass}">${isCorrect ? '' : correctAnswerText}</small></td><td>${timePerQuestion[i]}s</td></tr>`; }); summaryHtml += '</table>'; document.getElementById('results-summary').innerHTML = summaryHtml; if (window.MathJax) { MathJax.typesetPromise([resultsView]).catch((err) => console.log(err.message)); } };
+                
+                menuToggle.addEventListener('click', () => { menuToggle.classList.toggle('is-active'); navPanel.classList.toggle('open'); overlay.classList.toggle('open'); body.classList.toggle('no-scroll'); });
+                overlay.addEventListener('click', closeMenu);
+                showCreatorBtn.addEventListener('click', (e) => { e.preventDefault(); showCreatorView(); });
+                addQuestionBtn.addEventListener('click', addQuestion);
+                generateManualBtn.addEventListener('click', () => { const data = getQuizDataFromForm(); if(data.length > 0) generateAndSaveQuiz(data, manualShareContainer); else alert("Please fill out at least one question completely."); });
+                createFileBtn.addEventListener('click', handleFileUpload);
+                aiGenerateBtn.addEventListener('click', generateQuizWithAI);
+                aiApiKeyInput.addEventListener('change', saveApiKey);
+                
+                updateQuizCount();
+                addQuestion();
+                loadApiKey();
+            }
+
+            function waitForLibs() { if (window.supabase && window.pdfjsLib) { mainApp(); } else { setTimeout(waitForLibs, 100); } }
+            waitForLibs();
+        });
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
+    </script>
+
+    <!-- JAVASCRIPT FOR SPLITTEXT AND GRADIENT ANIMATION -->
+    <script>
+        // Define handleAnimationComplete function
+        const handleAnimationComplete = () => {
+            console.log('All letters of the title have animated!');
+        };
+
+        /**
+         * Function to create SplitText-like animation with animated gradient.
+         * Dynamically applies gradient styles and animates characters using GSAP.
+         * @param {string} targetSelector - CSS selector for the target element (e.g., '#my-title').
+         * @param {object} options - Configuration options for animation and gradient.
+         * @param {number} options.delay - Delay before animation starts (ms).
+         * @param {number} options.duration - Duration of character animation (s).
+         * @param {string} options.ease - GSAP ease function.
+         * @param {object} options.from - GSAP 'from' properties for characters.
+         * @param {object} options.to - GSAP 'to' properties for characters.
+         * @param {number} options.threshold - IntersectionObserver threshold.
+         * @param {string} options.rootMargin - IntersectionObserver rootMargin.
+         * @param {string} options.textAlign - CSS text-align for the container.
+         * @param {Function} options.onLetterAnimationComplete - Callback when char animation completes.
+         * @param {number} options.stagger - Delay between individual character animations (s).
+         * @param {Array<string>} options.gradientColors - Array of CSS color strings for the gradient.
+         * @param {number} options.gradientSpeed - Speed of gradient animation (s).
+         */
+        function createSplitTextAnimation(targetSelector, options) {
+            const element = document.querySelector(targetSelector);
+            if (!element) {
+                console.warn(`SplitText target not found: ${targetSelector}`);
+                return;
+            }
+
+            // Store original text and clear element
+            const originalText = element.textContent;
+            element.textContent = ''; 
+
+            // Create spans for each character and apply dynamic styles
+            const chars = originalText.split('');
+            const charSpans = chars.map(char => {
+                const span = document.createElement('span');
+                span.textContent = char === ' ' ? '\u00A0' : char; // Use non-breaking space for actual spaces
+                span.style.display = 'inline-block'; // Essential for transform animations
+                span.style.position = 'relative'; // Allow z-index if needed
+
+                // Apply gradient text styles directly to each span
+                span.style.backgroundImage = `linear-gradient(to right, ${options.gradientColors.join(", ")})`;
+                span.style.backgroundSize = '300% 100%'; // Wider than text for animation
+                span.style.webkitBackgroundClip = 'text';
+                span.style.backgroundClip = 'text';
+                span.style.color = 'transparent'; // Make text transparent to reveal clipped background
+                span.style.animation = `gradientTextMove ${options.gradientSpeed}s linear infinite`; // Gradient animation
+
+                return span;
+            });
+
+            element.append(...charSpans); // Add all created spans back to the element
+
+            // Apply text-align to the parent container
+            if (options.textAlign) {
+                element.style.textAlign = options.textAlign;
+            }
+
+            // Define @keyframes for gradientTextMove if not already defined (or ensure it's global)
+            // It's good practice to ensure these keyframes exist.
+            if (!document.getElementById('gradientTextMoveKeyframes')) {
+                const styleSheet = document.createElement('style');
+                styleSheet.id = 'gradientTextMoveKeyframes';
+                styleSheet.textContent = `
+                    @keyframes gradientTextMove {
+                        0% { background-position: 0% 50%; }
+                        100% { background-position: 100% 50%; }
+                    }
+                `;
+                document.head.appendChild(styleSheet);
+            }
+
+            // Set the initial state of the characters using GSAP's .set()
+            gsap.set(charSpans, { opacity: options.from.opacity, y: options.from.y });
+
+            // Create an Intersection Observer to trigger the animation when the element is visible
+            const observerOptions = {
+                rootMargin: options.rootMargin || '0px',
+                threshold: options.threshold || 0
+            };
+
+            const observer = new IntersectionObserver((entries, observerInstance) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        gsap.to(charSpans, {
+                            opacity: options.to.opacity,
+                            y: options.to.y,
+                            delay: options.delay / 1000,
+                            duration: options.duration,
+                            ease: options.ease,
+                            stagger: options.stagger || 0.05,
+                            onComplete: options.onLetterAnimationComplete
+                        });
+                        observerInstance.disconnect(); // Stop observing after animation has triggered
+                    }
+                });
+            }, observerOptions);
+
+            observer.observe(element); // Start observing the element
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get root CSS variables for gradient colors
+            const style = getComputedStyle(document.documentElement);
+            const gradientColor1 = style.getPropertyValue('--gradient-text-color-1').trim();
+            const gradientColor2 = style.getPropertyValue('--gradient-text-color-2').trim();
+            const gradientColor3 = style.getPropertyValue('--gradient-text-color-3').trim();
+
+
+            // Apply SplitText animation to the NEW welcome title
+            createSplitTextAnimation('#animated-welcome-title', {
+                delay: 50, 
+                duration: 0.6,
+                ease: "power3.out",
+                from: { opacity: 0, y: 40 },
+                to: { opacity: 1, y: 0 },
+                threshold: 0.1,
+                rootMargin: "-100px",
+                textAlign: "center",
+                onLetterAnimationComplete: handleAnimationComplete,
+                stagger: 0.04,
+                gradientColors: [gradientColor1, gradientColor2, gradientColor1, gradientColor3], // Use colors from CSS variables
+                gradientSpeed: 8 // seconds
+            });
+
+            // Apply SplitText animation to the main hero title
+            createSplitTextAnimation('#animated-quiz-title', {
+                delay: 100, 
+                duration: 0.6,
+                ease: "power3.out",
+                from: { opacity: 0, y: 40 },
+                to: { opacity: 1, y: 0 },
+                threshold: 0.1,
+                rootMargin: "-100px",
+                textAlign: "center",
+                onLetterAnimationComplete: handleAnimationComplete,
+                stagger: 0.05,
+                gradientColors: [gradientColor1, gradientColor2, gradientColor1, gradientColor3], // Use colors from CSS variables
+                gradientSpeed: 8 // seconds
+            });
+
+            // --- JAVASCRIPT FOR INFINITE MENU ---
+            function setupInfiniteScroll(containerId, wrapperId, options) {
+                const container = document.getElementById(containerId);
+                const wrapper = document.getElementById(wrapperId);
+                if (!container || !wrapper) {
+                    console.warn(`Infinite scroll elements not found for ID: ${containerId}`);
+                    return;
+                }
+
+                const initialItemsHTML = wrapper.innerHTML;
+                wrapper.innerHTML += initialItemsHTML + initialItemsHTML + initialItemsHTML; 
+
+                setTimeout(() => {
+                    // Calculate the width of one full set of content for seamless looping
+                    // We need to clone the wrapper temporarily to measure its intrinsic width before transform
+                    const tempWrapper = wrapper.cloneNode(true);
+                    tempWrapper.style.position = 'absolute';
+                    tempWrapper.style.visibility = 'hidden';
+                    tempWrapper.style.width = 'auto'; // Allow it to take its natural width
+                    wrapper.parentNode.appendChild(tempWrapper);
+                    const singleSetWidth = tempWrapper.scrollWidth / 4; // Divide by 4 because we duplicated 3 times + original
+                    wrapper.parentNode.removeChild(tempWrapper);
+
+                    let animation;
+
+                    const startAnimation = () => {
+                        if (animation) {
+                            animation.resume();
+                        } else {
+                            gsap.set(wrapper, { x: 0 });
+                            animation = gsap.to(wrapper, {
+                                x: -singleSetWidth, // Scroll across one set of content
+                                duration: options.animationSpeed,
+                                ease: "none",
+                                repeat: -1, // Loop indefinitely
+                                onRepeat: () => {
+                                    // When it completes one loop, reset instantly to start of next duplicated section
+                                    gsap.set(wrapper, { x: 0 });
+                                },
+                                overwrite: "auto"
+                            });
+                        }
+                    };
+
+                    const pauseAnimation = () => {
+                        if (animation) animation.pause();
+                    };
+
+                    startAnimation();
+
+                    if (options.pauseOnHover) {
+                        wrapper.addEventListener('mouseenter', pauseAnimation);
+                        wrapper.addEventListener('mouseleave', startAnimation);
+                    }
+                }, 50);
+            }
+
+            setupInfiniteScroll('infinite-menu-container-main', 'infinite-menu-wrapper-main', {
+                animationSpeed: 40, 
+                pauseOnHover: true
+            });
+            // --- END JAVASCRIPT FOR INFINITE MENU ---
+
+            // --- JAVASCRIPT FOR PARTICLES.JS ---
+            if (typeof particlesJS !== 'undefined') { 
+                particlesJS('particles-js', {
+                    "particles": {
+                        "number": {
+                            "value": 80, 
+                            "density": {
+                                "enable": true,
+                                "value_area": 800 
+                            }
+                        },
+                        "color": {
+                            "value": "#cccccc" 
+                        },
+                        "shape": {
+                            "type": "circle", 
+                            "stroke": {
+                                "width": 0,
+                                "color": "#000000"
+                            },
+                            "polygon": {
+                                "nb_sides": 5
+                            }
+                        },
+                        "opacity": {
+                            "value": 0.5,
+                            "random": false,
+                            "anim": {
+                                "enable": false,
+                                "speed": 1,
+                                "opacity_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "size": {
+                            "value": 3,
+                            "random": true,
+                            "anim": {
+                                "enable": false,
+                                "speed": 40,
+                                "size_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "line_linked": {
+                            "enable": true,
+                            "distance": 150, 
+                            "color": "#cccccc", 
+                            "opacity": 0.4,
+                            "width": 1
+                        },
+                        "move": {
+                            "enable": true,
+                            "speed": 6, 
+                            "direction": "none",
+                            "random": false,
+                            "straight": false,
+                            "out_mode": "out",
+                            "bounce": false,
+                            "attract": {
+                                "enable": false,
+                                "rotateX": 600,
+                                "rotateY": 1200
+                            }
+                        }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": {
+                            "onhover": {
+                                "enable": true,
+                                "mode": "grab" 
+                            },
+                            "onclick": {
+                                "enable": true,
+                                "mode": "push" 
+                            },
+                            "resize": true
+                        },
+                        "modes": {
+                            "grab": {
+                                "distance": 400,
+                                "line_linked": {
+                                    "opacity": 1
+                                }
+                            },
+                            "bubble": {
+                                "distance": 400,
+                                "size": 40,
+                                "duration": 2,
+                                "opacity": 8,
+                                "speed": 3
+                            },
+                            "repulse": {
+                                "distance": 200,
+                                "duration": 0.4
+                            },
+                            "push": {
+                                "particles_nb": 4
+                            },
+                            "remove": {
+                                "particles_nb": 2
+                            }
+                        }
+                    },
+                    "retina_detect": true
+                });
+
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                function updateParticleColor(e) {
+                    const color = e.matches ? '#888888' : '#cccccc';
+                    if (window.pJSDom && window.pJSDom.length > 0) {
+                        window.pJSDom[0].pJS.particles.color.value = color;
+                        window.pJSDom[0].pJS.particles.line_linked.color = color;
+                        window.pJSDom[0].pJS.fn.particlesDraw();
+                    }
+                }
+                mediaQuery.addEventListener('change', updateParticleColor);
+                updateParticleColor(mediaQuery);
+            }
+            // --- END JAVASCRIPT FOR PARTICLES.JS ---
+
+        }); // End of DOMContentLoaded listener
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
+    </script>
+</body>
+</html>
